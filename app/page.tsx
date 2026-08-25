@@ -22,6 +22,164 @@ type Release = {
   added?: boolean;
 };
 
+const translations = {
+  en: {
+    // Header
+    addAlbum: "+ Add Album",
+
+    // Welcome
+    welcomeTitle: "Welcome to Album Wall",
+    welcome: "Welcome!",
+    step1: "Search for an album or artist.",
+    step2: "Add albums to your library.",
+    step3: "Select albums and create a collage.",
+    step4: "Shuffle to generate a random collage🪄.",
+    localStorageInfo:
+      "Your album library is stored locally in your browser.",
+
+    // Search
+    addAnAlbum: "Add an Album",
+    artist: "Artist",
+    releaseYear: "Release year",
+    albumName: "Album name",
+    search: "Search",
+    searching: "Searching...",
+    searchingMusicBrainz:
+      "Searching MusicBrainz...",
+    artistYearExplanation:
+      "Artist + year: browse releases without images.",
+    artistAlbumExplanation:
+      "Artist + album: search precisely with album artwork.",
+
+    // Search results
+    availableReleases: "Available releases",
+    searchResults: "Search results",
+    artistYearNotice:
+      "Showing releases from this artist for the selected year. Album artwork is not loaded in this view.",
+    add: "Add",
+    adding: "Adding...",
+    added: "✓ Added",
+
+    // Errors
+    enterArtist:
+      "Please enter an artist name.",
+    enterAlbumOrYear:
+      "Please enter either an album name or a release year.",
+    noReleasesForYear:
+      "No releases found for this artist and year.",
+    noMatchingReleases:
+      "No matching releases found.",
+    searchFailed:
+      "MusicBrainz search failed.",
+    unableToConnect:
+      "Unable to connect to MusicBrainz.",
+    unableToGetCover:
+      "Unable to get album cover.",
+    unableToAdd:
+      "Unable to add album.",
+    coverNotFound:
+      "Cover not found.",
+
+    // Library
+    cancel: "Cancel",
+    albumLibrary: "Album Library",
+    empty: "Empty",
+    delete: "Delete",
+
+    // Collage
+    createCollage: "Create your collage",
+    albumsSelected: "albums selected",
+    albumSelected: "album selected",
+    extraAlbum:
+      "extra album. Only",
+    extraAlbums:
+      "extra albums. Only",
+    willBeUsed: "will be used.",
+    generate: "Generate",
+    generating: "Generating...",
+    shuffle: "🎲 Shuffle",
+    download: "Download",
+  },
+
+  zh: {
+    // Header
+    addAlbum: "+ 添加专辑",
+
+    // Welcome
+    welcomeTitle: "欢迎使用 Album Wall",
+    welcome: "欢迎！",
+    step1: "搜索专辑或艺人。",
+    step2: "将专辑添加到你的收藏库。",
+    step3: "选择专辑并创建专辑拼图。",
+    step4: "点击随机按钮生成随机拼贴🪄。",
+    localStorageInfo:
+      "你的专辑收藏会保存在浏览器本地。",
+
+    // Search
+    addAnAlbum: "添加专辑",
+    artist: "艺人",
+    releaseYear: "发行年份",
+    albumName: "专辑名称",
+    search: "搜索",
+    searching: "搜索中...",
+    searchingMusicBrainz:
+      "正在搜索 MusicBrainz...",
+    artistYearExplanation:
+      "艺人 + 年份：浏览该艺人在这一年的发行记录",
+    artistAlbumExplanation:
+      "艺人 + 专辑：进行更精确的搜索，并预览专辑封面",
+
+    // Search results
+    availableReleases: "可用发行记录",
+    searchResults: "搜索结果",
+    artistYearNotice:
+      "正在显示该艺人在所选年份的发行记录。此模式不会加载专辑封面",
+    add: "添加",
+    adding: "添加中...",
+    added: "✓ 已添加",
+
+    // Errors
+    enterArtist:
+      "请输入艺人名称。",
+    enterAlbumOrYear:
+      "请输入专辑名称或发行年份。",
+    noReleasesForYear:
+      "没有找到该艺人在这一年的发行记录。",
+    noMatchingReleases:
+      "没有找到匹配的发行记录。",
+    searchFailed:
+      "MusicBrainz 搜索失败。",
+    unableToConnect:
+      "无法连接到 MusicBrainz。",
+    unableToGetCover:
+      "无法获取专辑封面。",
+    unableToAdd:
+      "无法添加该专辑。",
+    coverNotFound:
+      "找不到该专辑封面。",
+
+    // Library
+    cancel: "取消",
+    albumLibrary: "专辑收藏库",
+    empty: "空空如也",
+    delete: "删除",
+
+    // Collage
+    createCollage: "创建你的专辑拼图",
+    albumsSelected: "张专辑已选择",
+    albumSelected: "张专辑已选择",
+    extraAlbum:
+      "张多余的专辑。只会使用",
+    extraAlbums:
+      "张多余的专辑。只会使用",
+    willBeUsed: "张专辑。",
+    generate: "生成",
+    generating: "生成中...",
+    shuffle: "🎲 随机生成",
+    download: "下载",
+  },
+};
+
 export default function Home() {
   const [albums, setAlbums] =
     useState<Album[]>([]);
@@ -46,6 +204,11 @@ export default function Home() {
 
   const [loaded, setLoaded] =
     useState(false);
+
+  const [language, setLanguage] =
+  useState<"en" | "zh">("en");
+
+  const t = translations[language];
 
   const [showWelcome, setShowWelcome] =
     useState(true);
@@ -143,11 +306,6 @@ export default function Home() {
         !cleanTitle
       );
 
-    const preciseSearch =
-      Boolean(
-        cleanArtist &&
-        cleanTitle
-      );
 
     // --------------------------------
     // Artist + Year
@@ -156,9 +314,7 @@ export default function Home() {
     if (
       !cleanArtist
     ) {
-      setError(
-        "Please enter an artist name."
-      );
+      setError(t.enterArtist);
       return;
     }
 
@@ -166,9 +322,7 @@ export default function Home() {
       !cleanYear &&
       !cleanTitle
     ) {
-      setError(
-        "Please enter either an album name or a release year."
-      );
+      setError(t.enterAlbumOrYear);
       return;
     }
 
@@ -218,7 +372,7 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(
           data.error ||
-            "MusicBrainz search failed."
+            t.unableToGetCover
         );
       }
 
@@ -242,15 +396,13 @@ export default function Home() {
           "artist-year"
       );
 
-      if (
-        !resultReleases.length
-      ) {
-        setError(
-          artistYearSearch
-            ? "No releases found for this artist and year."
-            : "No matching releases found."
-        );
-      }
+      if (!resultReleases.length) {
+      setError(
+        artistYearSearch
+          ? t.noReleasesForYear
+          : t.noMatchingReleases
+      );
+    }
 
     } catch (error) {
       console.error(
@@ -259,10 +411,10 @@ export default function Home() {
       );
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect to MusicBrainz."
-      );
+      error instanceof Error
+      ? error.message
+      : t.unableToConnect
+);
     } finally {
       setSearching(false);
     }
@@ -291,13 +443,12 @@ export default function Home() {
 
       const data =
         await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "Unable to get album cover."
-        );
-      }
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              t.searchFailed
+          );
+        }
 
       const newAlbum: Album = {
         id: Date.now(),
@@ -341,8 +492,8 @@ export default function Home() {
 
       setError(
         error instanceof Error
-          ? error.message
-          : "Unable to add album."
+        ? error.message
+        : t.unableToAdd
       );
     } finally {
       setAddingId(null);
@@ -687,7 +838,7 @@ export default function Home() {
 
             <div className="flex items-center justify-between bg-[#000080] px-2 py-1 text-white">
               <span className="font-[family-name:var(--font-pixelify)] text-sm">
-                Welcome to Album Wall
+                {t.welcomeTitle}
               </span>
 
               <button
@@ -705,7 +856,8 @@ export default function Home() {
             <div className="p-5">
 
               <h2 className="font-[family-name:var(--font-pixelify)] text-lg">
-                Welcome!
+                {t.welcome}
+
               </h2>
 
               <div className="mt-4 space-y-2 text-sm">
@@ -770,7 +922,13 @@ export default function Home() {
         </div>
       )}
 
-      <main className="min-h-screen bg-[#3a6ea5] p-6 font-sans text-black">
+      <main
+      className={`min-h-screen bg-[#3a6ea5] p-6 text-black ${
+        language === "zh"
+          ? "font-[Zpix]"
+          : "font-sans"
+      }`}
+>
 
         <div className="mx-auto max-w-7xl border-2 border-white bg-[#c0c0c0] shadow-[4px_4px_0_#000]">
 
@@ -814,33 +972,34 @@ export default function Home() {
 
             {/* Menu Bar */}
 
-            <div className="flex gap-5 border-b border-[#808080] bg-[#c0c0c0] px-3 py-1 font-[family-name:var(--font-pixelify)] text-sm text-black">
+           <div className="flex items-center justify-between border-b border-[#808080] bg-[#c0c0c0] px-3 py-1 font-[family-name:var(--font-pixelify)] text-sm text-black">
 
-              <span>
-                File
-              </span>
+          <div className="flex gap-5">
+            <span>File</span>
+            <span>Edit</span>
+            <span>View</span>
+            <span>Library</span>
+            <span>Wallpaper</span>
+            <span>Help</span>
+          </div>
 
-              <span>
-                Edit
-              </span>
 
-              <span>
-                View
-              </span>
+          <button
+            onClick={() =>
+              setLanguage(
+                language === "en"
+                  ? "zh"
+                  : "en"
+              )
+            }
+            className="border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-2 py-0.5 text-xs"
+          >
+            {language === "en"
+              ? "中文"
+              : "English"}
+          </button>
 
-              <span>
-                Library
-              </span>
-
-              <span>
-                Wallpaper
-              </span>
-
-              <span>
-                Help
-              </span>
-
-            </div>
+        </div>
 
             {/* Add Album */}
 
@@ -852,7 +1011,7 @@ export default function Home() {
                 }
                 className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-4 py-1 text-sm text-black active:border-b-white active:border-r-white"
               >
-                + Add Album
+                {t.addAlbum}
               </button>
 
             </div>
@@ -876,7 +1035,7 @@ export default function Home() {
 
                 <input
                   type="text"
-                  placeholder="Artist"
+                  placeholder={t.artist}
                   value={
                     artist
                   }
@@ -896,7 +1055,7 @@ export default function Home() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  placeholder="Release year"
+                  placeholder={t.releaseYear}
                   value={
                     year
                   }
@@ -922,7 +1081,7 @@ export default function Home() {
 
                 <input
                   type="text"
-                  placeholder="Album name"
+                  placeholder={t.albumName}
                   value={
                     title
                   }
@@ -949,8 +1108,8 @@ export default function Home() {
                   className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-5 py-2 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {searching
-                    ? "Searching..."
-                    : "Search"}
+                  ? t.searching
+                  : t.search}
                 </button>
 
               </div>
@@ -960,16 +1119,12 @@ export default function Home() {
               <div className="mt-3 text-xs text-neutral-600">
 
                 <p>
-                  Artist + year:
-                  browse releases
-                  without images.
-                </p>
+              {t.artistYearExplanation}
+              </p>
 
-                <p>
-                  Artist + album:
-                  search precisely
-                  with album artwork.
-                </p>
+              <p>
+              {t.artistAlbumExplanation}
+              </p>
 
               </div>
 
@@ -993,7 +1148,7 @@ export default function Home() {
                   </div>
 
                   <p className="mt-2 text-xs text-black">
-                    Searching MusicBrainz...
+                    {t.searchingMusicBrainz}
                   </p>
 
                 </div>
@@ -1010,12 +1165,7 @@ export default function Home() {
                   {artistOnlySearch && (
                     <div className="mb-3 border border-[#808080] bg-[#d8e2ee] px-3 py-2 text-xs text-black">
 
-                      Showing releases
-                      from this artist
-                      for the selected
-                      year. Album artwork
-                      is not loaded in this
-                      view.
+                      {t.artistYearNotice}
 
                     </div>
                   )}
@@ -1026,8 +1176,8 @@ export default function Home() {
 
                     <h3 className="text-sm font-medium text-neutral-500">
                       {artistOnlySearch
-                        ? "Available releases"
-                        : "Search results"}
+                      ? t.availableReleases
+                      : t.searchResults}
                     </h3>
 
                   </div>
@@ -1117,7 +1267,7 @@ export default function Home() {
                               disabled
                               className="ml-4 shrink-0 font-[family-name:var(--font-pixelify)] border-2 border-[#808080] bg-[#d4d0c8] px-4 py-1.5 text-sm text-[#404040]"
                             >
-                              ✓ Added
+                              {t.added}
                             </button>
 
                           ) : (
@@ -1134,10 +1284,9 @@ export default function Home() {
                               }
                               className="ml-4 shrink-0 font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-4 py-1.5 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {addingId ===
-                              release.id
-                                ? "Adding..."
-                                : "Add"}
+                              {addingId === release.id
+                              ? t.adding
+                              : t.add}
                             </button>
 
                           )}
@@ -1176,7 +1325,7 @@ export default function Home() {
                   }}
                   className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-5 py-1.5 text-sm text-black active:border-b-white active:border-r-white"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
 
               </div>
@@ -1187,7 +1336,7 @@ export default function Home() {
           {/* Album Library */}
 
           <div className="mb-4 border-b border-[#808080] bg-[#c0c0c0] px-3 py-2 font-[family-name:var(--font-pixelify)] text-sm">
-            Album Library
+            {t.albumLibrary}
           </div>
 
           {/* Album Grid */}
@@ -1198,7 +1347,7 @@ export default function Home() {
             <div className="py-20 text-center">
 
               <p className="text-lg text-neutral-400">
-                Empty
+                {t.empty}
               </p>
 
             </div>
@@ -1319,14 +1468,14 @@ export default function Home() {
               <div>
 
                 <h2 className="font-[family-name:var(--font-pixelify)] text-2xl font-semibold">
-                  Create your collage
+                  {t.createCollage}
                 </h2>
 
                 <p className="mt-1 text-sm text-neutral-400">
-                  {
-                    selectedAlbums.length
-                  }{" "}
-                  albums selected
+                {selectedAlbums.length}{" "}
+                {selectedAlbums.length === 1
+                  ? t.albumSelected
+                  : t.albumsSelected}
                 </p>
 
                 {selectedAlbums.length >
@@ -1424,8 +1573,8 @@ export default function Home() {
                   className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-6 py-1.5 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {generating
-                    ? "Generating..."
-                    : "Generate"}
+                    ? t.generating
+                    : t.generate}
                 </button>
 
                 <button
@@ -1439,7 +1588,7 @@ export default function Home() {
                   }
                   className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-6 py-1.5 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  🎲 Shuffle
+                  {t.shuffle}
                 </button>
 
                 <button
@@ -1468,7 +1617,7 @@ export default function Home() {
                   }
                   className="font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-6 py-1.5 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Download
+                  {t.download}
                 </button>
 
               </div>
