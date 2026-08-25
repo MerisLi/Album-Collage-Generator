@@ -99,6 +99,8 @@ const translations = {
     generating: "Generating...",
     shuffle: "🎲 Shuffle",
     download: "Download",
+    swapHint:
+    "Double-click two covers to swap positions",
   },
 
   zh: {
@@ -113,7 +115,7 @@ const translations = {
     step3: "选择专辑并创建专辑拼图。",
     step4: "点击随机按钮生成随机拼贴🪄。",
     localStorageInfo:
-      "你的专辑收藏会保存在浏览器本地。",
+      "已添加到收藏库的专辑会保存在浏览器本地。",
 
     // Search
     addAnAlbum: "添加专辑",
@@ -177,6 +179,7 @@ const translations = {
     generating: "生成中...",
     shuffle: "🎲 随机生成",
     download: "下载",
+    swapHint:"双击两张封面即可交换位置",
   },
 };
 
@@ -862,45 +865,39 @@ export default function Home() {
 
               <div className="mt-4 space-y-2 text-sm">
 
-                <p>
-                  <span className="font-bold">
-                    1.
-                  </span>{" "}
-                  Search for an album
-                  or artist.
-                </p>
+            <p>
+              <span className="font-bold">
+                1.
+              </span>{" "}
+              {t.step1}
+            </p>
 
-                <p>
-                  <span className="font-bold">
-                    2.
-                  </span>{" "}
-                  Add albums to your
-                  library.
-                </p>
+            <p>
+              <span className="font-bold">
+                2.
+              </span>{" "}
+              {t.step2}
+            </p>
 
-                <p>
-                  <span className="font-bold">
-                    3.
-                  </span>{" "}
-                  Select albums and
-                  create a collage.
-                </p>
+            <p>
+              <span className="font-bold">
+                3.
+              </span>{" "}
+              {t.step3}
+            </p>
 
-                <p>
-                  <span className="font-bold">
-                    4.
-                  </span>{" "}
-                  Shuffle to generate
-                  a random collage🪄.
-                </p>
+            <p>
+              <span className="font-bold">
+                4.
+              </span>{" "}
+              {t.step4}
+            </p>
 
-              </div>
+          </div>
 
-              <div className="mt-5 border-2 border-[#808080] border-b-white border-r-white bg-[#e0e0e0] p-3 text-xs">
-                Your album library is
-                stored locally in your
-                browser.
-              </div>
+             <div className="mt-5 border-2 border-[#808080] border-b-white border-r-white bg-[#e0e0e0] p-3 text-xs">
+              {t.localStorageInfo}
+            </div>
 
               <div className="mt-5 flex justify-end">
 
@@ -985,13 +982,17 @@ export default function Home() {
 
 
           <button
-            onClick={() =>
-              setLanguage(
-                language === "en"
-                  ? "zh"
-                  : "en"
-              )
-            }
+          onClick={() => {
+            setLanguage(
+              language === "en"
+                ? "zh"
+                : "en"
+            );
+
+            setShowWelcome(true);
+            setShowForm(false);
+          }}
+
             className="border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-2 py-0.5 text-xs"
           >
             {language === "en"
@@ -1471,7 +1472,7 @@ export default function Home() {
                   {t.createCollage}
                 </h2>
 
-                <p className="mt-1 text-sm text-neutral-400">
+                <p className="text-[#555555]">
                 {selectedAlbums.length}{" "}
                 {selectedAlbums.length === 1
                   ? t.albumSelected
@@ -1629,8 +1630,14 @@ export default function Home() {
                 gridSize *
                   gridSize && (
 
-              <div className="overflow-hidden border-2 border-white bg-[#c0c0c0] p-2 shadow-[2px_2px_0_#808080]">
+              <div>
 
+                <p className="mb-2 text-center text-[#555555] text-sm">
+                  {t.swapHint}
+                </p>
+
+                <div className="overflow-hidden border-2 border-white bg-[#c0c0c0] p-2 shadow-[2px_2px_0_#808080]">
+                
                 <div
                   className={`grid gap-0 ${
                     gridSize ===
@@ -1700,7 +1707,7 @@ export default function Home() {
                                 : ""
                             }`}
                           >
-
+                          
                             <img
                               src={
                                 album.cover
@@ -1725,6 +1732,8 @@ export default function Home() {
                     )}
 
                 </div>
+
+              </div>
 
               </div>
             )}
