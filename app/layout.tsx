@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const pixelify = Pixelify_Sans({
+const pixelify = localFont({
+  src: "../public/fonts/PixelifySans-VariableFont_wght.ttf",
   variable: "--font-pixelify",
-  subsets: ["latin"],
+  weight: "400 700",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${pixelify.variable} h-full antialiased`}
+      className={`${pixelify.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

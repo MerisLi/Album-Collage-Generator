@@ -13,7 +13,19 @@ export async function GET(request: Request) {
   const url = `https://coverartarchive.org/release/${id}`;
 
   try {
-    const response = await fetch(url);
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 8000);
+
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+    });
+
+
+    clearTimeout(timeout);
 
     console.log("Cover Art status:", response.status);
     console.log("Cover Art final URL:", response.url);
@@ -23,8 +35,7 @@ export async function GET(request: Request) {
     if (response.status === 404) {
       return Response.json(
         {
-          error:
-            "No cover art is available for this release.",
+          error: "coverNotFound",
         },
         { status: 404 }
       );
@@ -50,7 +61,7 @@ export async function GET(request: Request) {
       return Response.json(
         {
           error:
-            "No front cover is available for this release.",
+            "coverNotFound",
         },
         { status: 404 }
       );

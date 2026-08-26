@@ -373,11 +373,12 @@ export default function Home() {
         await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error ||
-            t.unableToGetCover
-        );
-      }
+      throw new Error(
+        data.error === "coverNotFound"
+          ? t.coverNotFound
+          : data.error || t.searchFailed
+      );
+    }
 
       const resultReleases =
         data.releases ?? [];
@@ -447,17 +448,18 @@ export default function Home() {
       const data =
         await response.json();
         if (!response.ok) {
-          throw new Error(
-            data.error ||
-              t.searchFailed
-          );
-        }
+        throw new Error(
+          data.error === "coverNotFound"
+            ? t.coverNotFound
+            : data.error || t.searchFailed
+        );
+      }
 
       const newAlbum: Album = {
         id: Date.now(),
 
         releaseId:
-          data.releaseId,
+          release.id,
 
         title:
           release.title,
