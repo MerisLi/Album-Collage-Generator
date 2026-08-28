@@ -112,7 +112,7 @@ export async function GET(request: Request) {
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 8000);
+    }, 20000);
 
     let response: Response;
 
