@@ -5,7 +5,6 @@ const converter = OpenCC.Converter({
   to: "tw",
 });
 
-
 type ReleaseResult = {
   id: string;
   title: string;
@@ -18,144 +17,85 @@ type ReleaseResult = {
   cover: string | null;
 };
 
-
 export async function GET(request: Request) {
-
-  const { searchParams } =
-    new URL(request.url);
-
+  const { searchParams } = new URL(request.url);
 
   const title =
-    searchParams
-      .get("title")
-      ?.trim() ?? "";
-
+    searchParams.get("title")?.trim() ?? "";
 
   const artist =
-    searchParams
-      .get("artist")
-      ?.trim() ?? "";
-
+    searchParams.get("artist")?.trim() ?? "";
 
   const year =
-    searchParams
-      .get("year")
-      ?.trim() ?? "";
-
-
+    searchParams.get("year")?.trim() ?? "";
 
   // -----------------------------
   // Validate
   // -----------------------------
 
-
   if (!artist) {
-
     return Response.json(
       {
-        error:
-          "Please enter an artist name.",
+        error: "Please enter an artist name.",
       },
       {
-        status:400,
+        status: 400,
       }
     );
-
   }
 
-
   if (!title && !year) {
-
     return Response.json(
       {
         error:
           "Please enter either an album name or a release year.",
       },
       {
-        status:400,
+        status: 400,
       }
     );
-
   }
-
-
 
   // -----------------------------
   // Normalize
   // -----------------------------
 
-
-  function normalizeText(
-    value:string
-  ) {
-
+  function normalizeText(value: string) {
     return value
       .toLowerCase()
       .normalize("NFKC")
-      .replace(
-        /[\s\-_（）()【】[\]]+/g,
-        ""
-      )
-      .replace(
-        /[^\p{L}\p{N}]/gu,
-        "");
-
+      .replace(/[\s\-_（）()【】[\]]+/g, "")
+      .replace(/[^\p{L}\p{N}]/gu, "");
   }
 
+  const convertedArtist = converter(artist);
 
-
-  const convertedArtist =
-    converter(artist);
-
-
-  const convertedTitle =
-    title
-      ? converter(title)
-      : "";
-
-
+  const convertedTitle = title
+    ? converter(title)
+    : "";
 
   const normalizedArtist =
-    normalizeText(
-      convertedArtist
-    );
+    normalizeText(convertedArtist);
 
-
-  const normalizedTitle =
-    convertedTitle
-      ? normalizeText(
-          convertedTitle
-        )
-      : "";
-
-
+  const normalizedTitle = convertedTitle
+    ? normalizeText(convertedTitle)
+    : "";
 
   // -----------------------------
-  // Build query
+  // Build MusicBrainz query
   // -----------------------------
-
 
   let query = "";
 
-
-
   if (!title && year) {
-
     query =
       `${convertedArtist} AND date:[${year}-01-01 TO ${year}-12-31]`;
-
   }
-
-
 
   if (title) {
-
     query =
-    `(${convertedTitle} OR ${title}) AND (${convertedArtist} OR ${artist})`;
-
+      `(${convertedTitle} OR ${title}) AND (${convertedArtist} OR ${artist})`;
   }
-
-
 
   const url =
     "https://musicbrainz.org/ws/2/release/" +
@@ -163,472 +103,208 @@ export async function GET(request: Request) {
     "&fmt=json" +
     "&limit=30";
 
-
-
-  // -----------------------------
-  // Cover
-  // -----------------------------
-
-
-  async function getCover(
-    releaseId:string
-  ) {
-
-    try {
-
-      const response =
-        await fetch(
-          `https://coverartarchive.org/release/${releaseId}`,
-          {
-            headers:{
-            "User-Agent":
-              "AlbumWall/0.1.0 (album-wall)",
-            Accept:
-              "application/json",
-          },
-            cache:
-              "no-store",
-          }
-        );
-
-
-      if(!response.ok){
-
-        return null;
-
-      }
-
-
-      const data =
-        await response.json();
-
-
-      return (
-        data.images?.[0]
-          ?.thumbnails
-          ?.large ??
-        data.images?.[0]
-          ?.image ??
-        null
-      );
-
-
-    } catch {
-
-      return null;
-
-    }
-
-  }
-
-
-
   // -----------------------------
   // Search MusicBrainz
   // -----------------------------
 
-
   try {
+    const controller = new AbortController();
 
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 8000);
 
-    const controller =
-      new AbortController();
+    let response: Response;
 
-    const timeout =
-      setTimeout(
-        () => controller.abort(),
-        8000
-      );
-
-    const response =
-      await fetch(url, {
-        headers:{
+    try {
+      response = await fetch(url, {
+        headers: {
           "User-Agent":
             "AlbumWall/0.1.0 (album-wall)",
-          Accept:
-            "application/json",
+          Accept: "application/json",
         },
-        signal:
-          controller.signal,
-        cache:
-          "no-store",
+        signal: controller.signal,
+        cache: "no-store",
       });
+    } finally {
+      clearTimeout(timeout);
+    }
 
-clearTimeout(timeout);
-
-
-
-    if(!response.ok){
-
+    if (!response.ok) {
       return Response.json(
         {
           error:
             "MusicBrainz request failed.",
         },
         {
-          status:
-            response.status,
+          status: response.status,
         }
       );
-
     }
 
+    const data = await response.json();
 
+    const results = data.releases ?? [];
 
-    const data =
-      await response.json();
-
-
-
-    const results =
-      data.releases ?? [];
-
-
-
-    const releases:
-      ReleaseResult[] = [];
-
-
-
-    const coverTasks:
-      Promise<ReleaseResult | null>[] = [];
-
-
+    const releases: ReleaseResult[] = [];
 
     const artistYearSearch =
-      Boolean(
-        !title && year
-      );
-
-
+      Boolean(!title && year);
 
     // -----------------------------
-    // Process
+    // Process releases
     // -----------------------------
 
-
-    for(
-      const release of results.slice(0,30)
-    ){
-
-
+    for (const release of results.slice(0, 30)) {
       const type =
-        release[
-          "release-group"
-        ]
-        ?.[
+        release["release-group"]?.[
           "primary-type"
         ];
 
-
-
-      if(
+      // Only keep Albums and EPs
+      if (
         type &&
         type !== "Album" &&
         type !== "EP"
-      ){
-
+      ) {
         continue;
-
       }
 
-
-
       const releaseArtist =
-        release[
-          "artist-credit"
-        ]
-        ?.map(
-          (a:any)=>a.name
-        )
-        .join(", ")
-        ??
-        artist;
-
-
+        release["artist-credit"]
+          ?.map((a: any) => a.name)
+          .join(", ") ?? artist;
 
       const normalizedReleaseArtist =
-      normalizeText(
-        releaseArtist
-      );
+        normalizeText(releaseArtist);
 
-    
       const artistMatches =
         normalizedReleaseArtist.includes(
           normalizedArtist
-        )
-        ||
+        ) ||
         normalizedArtist.includes(
           normalizedReleaseArtist
         );
 
-
-
-      if(!artistMatches){
-
+      if (!artistMatches) {
         continue;
-
       }
 
+      // -----------------------------
+      // Title matching
+      // -----------------------------
 
-
-      if(title){
-
+      if (title) {
         const normalizedReleaseTitle =
           normalizeText(
-            converter(
-              release.title
-            )
+            converter(release.title)
           );
-
-
 
         const titleMatches =
           normalizedReleaseTitle.includes(
             normalizedTitle
-          )
-          ||
+          ) ||
           normalizedTitle.includes(
             normalizedReleaseTitle
           );
 
-
-
-        if(!titleMatches){
-
+        if (!titleMatches) {
           continue;
-
         }
-
       }
 
+      // -----------------------------
+      // Year matching
+      // -----------------------------
 
-
-      if(year){
-
+      if (year) {
         const releaseYear =
-          release.date
-          ?.slice(0,4);
+          release.date?.slice(0, 4);
 
-
-
-        if(
-          releaseYear !== year
-        ){
-
+        if (releaseYear !== year) {
           continue;
-
         }
-
       }
 
-            // -----------------------------
-      // Artist + Year
-      // no cover
+      // -----------------------------
+      // Return release metadata only
+      //
+      // IMPORTANT:
+      // We intentionally do NOT fetch
+      // Cover Art Archive here.
       // -----------------------------
 
-      if (artistYearSearch) {
+      releases.push({
+        id: release.id,
 
+        title: release.title,
 
-        releases.push({
+        artist: releaseArtist,
 
-          id:
-            release.id,
+        date:
+          release.date ?? null,
 
-          title:
-            release.title,
+        country:
+          release.country ?? null,
 
-          artist:
-            releaseArtist,
+        status:
+          release.status ?? null,
 
-          date:
-            release.date ??
-            null,
+        type:
+          type ?? null,
 
-          country:
-            release.country ??
-            null,
+        disambiguation:
+          release.disambiguation ?? null,
 
-          status:
-            release.status ??
-            null,
-
-          type:
-            type ??
-            null,
-
-          disambiguation:
-            release.disambiguation ??
-            null,
-
-          cover:
-            null,
-
-        });
-
-
-        continue;
-
-      }
-
-
-
-      // -----------------------------
-      // Artist + Album
-      // cover parallel
-      // -----------------------------
-
-
-      coverTasks.push(
-
-        getCover(
-          release.id
-        )
-        .then(
-          (cover)=>(
-
-            cover
-              ? {
-
-                  id:
-                    release.id,
-
-                  title:
-                    release.title,
-
-                  artist:
-                    releaseArtist,
-
-                  date:
-                    release.date ??
-                    null,
-
-                  country:
-                    release.country ??
-                    null,
-
-                  status:
-                    release.status ??
-                    null,
-
-                  type:
-                    type ??
-                    null,
-
-                  disambiguation:
-                    release.disambiguation ??
-                    null,
-
-                  cover,
-
-                }
-              : null
-
-          ))
-
-      );
-
-
+        // Cover will be loaded separately
+        // through /api/album-cover
+        cover: null,
+      });
     }
 
-
-
     // -----------------------------
-    // Wait covers
+    // Sort artist + year results
     // -----------------------------
 
-
-    if(!artistYearSearch){
-
-
-      const coverResults =
-        await Promise.all(
-          coverTasks
+    if (artistYearSearch) {
+      releases.sort((a, b) => {
+        return a.title.localeCompare(
+          b.title
         );
-
-
-
-      releases.push(
-        ...coverResults
-          .filter(
-            (
-              item
-            ): item is ReleaseResult =>
-              item !== null
-          )
-          .slice(
-            0,
-            50
-          )
-      );
-
-
+      });
     }
 
-
-
     // -----------------------------
-    // Sort
+    // Response
     // -----------------------------
-
-
-    if(artistYearSearch){
-
-
-      releases.sort(
-        (
-          a,
-          b
-        )=>{
-
-          return a.title
-            .localeCompare(
-              b.title
-            );
-
-        }
-      );
-
-
-    }
-
-
 
     return Response.json({
-
       releases,
-
 
       searchMode:
         artistYearSearch
           ? "artist-year"
           : "artist-album",
 
-
-      artistOnly:
-        false,
-
+      artistOnly: false,
     });
-
-
-
   } catch (error) {
-  console.error(
-    "Search failed:",
-    error
-  );
+    console.error(
+      "Search failed:",
+      error
+    );
 
-  return Response.json(
-    {
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
-    },
-    {
-      status: 500,
-    }
-  );
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
 
-}
