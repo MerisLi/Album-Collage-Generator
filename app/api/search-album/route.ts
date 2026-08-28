@@ -82,26 +82,40 @@ export async function GET(request: Request) {
     : "";
 
   // -----------------------------
+  // Search mode
+  // -----------------------------
+
+  const artistYearSearch =
+    Boolean(!title && year);
+
+  // -----------------------------
   // Build MusicBrainz query
   // -----------------------------
 
   let query = "";
 
-  if (!title && year) {
+  if (artistYearSearch) {
     query =
-      `${convertedArtist} AND date:[${year}-01-01 TO ${year}-12-31]`;
-  }
-
-  if (title) {
+      `artist:"${convertedArtist}" AND date:[${year}-01-01 TO ${year}-12-31]`;
+  } else {
     query =
       `(${convertedTitle} OR ${title}) AND (${convertedArtist} OR ${artist})`;
   }
+
+  /*
+   * Artist + year searches can return a very large
+   * number of different physical / regional versions.
+   *
+   * We only need enough releases to identify the
+   * distinct release groups.
+   */
+  const limit = artistYearSearch ? 20 : 20;
 
   const url =
     "https://musicbrainz.org/ws/2/release/" +
     `?query=${encodeURIComponent(query)}` +
     "&fmt=json" +
-    "&limit=30";
+    `&limit=${limit}`;
 
   // -----------------------------
   // Search MusicBrainz
@@ -117,6 +131,15 @@ export async function GET(request: Request) {
     let response: Response;
 
     try {
+      /*
+       * IMPORTANT:
+       *
+       * Use force-cache here.
+       *
+       * The same artist / album / year search can
+       * safely be cached because MusicBrainz data
+       * does not need to be fetched on every click.
+       */
       response = await fetch(url, {
         headers: {
           "User-Agent":
@@ -124,7 +147,10 @@ export async function GET(request: Request) {
           Accept: "application/json",
         },
         signal: controller.signal,
-        cache: "no-store",
+        cache: "force-cache",
+        next: {
+          revalidate: 86400,
+        },
       });
     } finally {
       clearTimeout(timeout);
@@ -148,14 +174,18 @@ export async function GET(request: Request) {
 
     const releases: ReleaseResult[] = [];
 
-    const artistYearSearch =
-      Boolean(!title && year);
+    // -----------------------------
+    // Prevent duplicate release groups
+    // -----------------------------
+
+    const seenReleaseGroups =
+      new Set<string>();
 
     // -----------------------------
     // Process releases
     // -----------------------------
 
-    for (const release of results.slice(0, 30)) {
+    for (const release of results) {
       const type =
         release["release-group"]?.[
           "primary-type"
@@ -227,11 +257,28 @@ export async function GET(request: Request) {
       }
 
       // -----------------------------
-      // Return release metadata only
-      //
-      // IMPORTANT:
-      // We intentionally do NOT fetch
-      // Cover Art Archive here.
+      // Deduplicate release groups
+      // -----------------------------
+
+      const releaseGroupId =
+        release["release-group"]?.id;
+
+      if (releaseGroupId) {
+        if (
+          seenReleaseGroups.has(
+            releaseGroupId
+          )
+        ) {
+          continue;
+        }
+
+        seenReleaseGroups.add(
+          releaseGroupId
+        );
+      }
+
+      // -----------------------------
+      // Return metadata only
       // -----------------------------
 
       releases.push({
@@ -256,8 +303,6 @@ export async function GET(request: Request) {
         disambiguation:
           release.disambiguation ?? null,
 
-        // Cover will be loaded separately
-        // through /api/album-cover
         cover: null,
       });
     }
@@ -278,16 +323,31 @@ export async function GET(request: Request) {
     // Response
     // -----------------------------
 
-    return Response.json({
-      releases,
+    return Response.json(
+      {
+        releases,
 
-      searchMode:
-        artistYearSearch
-          ? "artist-year"
-          : "artist-album",
+        searchMode:
+          artistYearSearch
+            ? "artist-year"
+            : "artist-album",
 
-      artistOnly: false,
-    });
+        artistOnly: false,
+      },
+      {
+        headers: {
+          /*
+           * Let Vercel cache the final API response.
+           *
+           * 1 hour browser/CDN cache,
+           * stale content can still be served
+           * while a new response is generated.
+           */
+          "Cache-Control":
+            "public, s-maxage=3600, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "Search failed:",
