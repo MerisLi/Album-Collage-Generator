@@ -513,16 +513,35 @@ try {
 // Delete album
 // -----------------------------
 
-function deleteAlbum(
-id: number
-) {
-setAlbums(
-(currentAlbums) =>
-currentAlbums.filter(
-(album) =>
-album.id !== id
-)
-);
+function deleteAlbum(id: number) {
+  setAlbums((currentAlbums) =>
+    currentAlbums.filter(
+      (album) => album.id !== id
+    )
+  );
+
+  // Remove the deleted album from selection
+  setSelectedAlbums((currentSelected) =>
+    currentSelected.filter(
+      (albumId) => albumId !== id
+    )
+  );
+
+  // Remove the deleted album from the current wallpaper order
+  setWallpaperOrder((currentOrder) =>
+    currentOrder.filter(
+      (albumId) => albumId !== id
+    )
+  );
+
+  // Reset the generated collage because it may contain the deleted album
+  setWallpaperUrl(null);
+
+  // Cancel swap mode if the deleted album was involved
+  if (swapSource === id) {
+    setSwapSource(null);
+    setSwapMode(false);
+  }
 }
 
 // -----------------------------
@@ -846,6 +865,75 @@ await generateWallpaper(
 );
 
 
+}
+
+// -----------------------------
+// Download Wallpaper
+// -----------------------------
+
+async function downloadWallpaper() {
+  if (!wallpaperUrl) {
+    return;
+  }
+
+  try {
+    const response = await fetch(wallpaperUrl);
+    const blob = await response.blob();
+
+    const file = new File(
+      [blob],
+      "album-wall.png",
+      { type: "image/png" }
+    );
+
+    const isMobile =
+      /Android|iPhone|iPad|iPod/i.test(
+        navigator.userAgent
+      );
+
+    // Use the mobile share sheet on phones/tablets
+    if (
+      isMobile &&
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+      await navigator.share({
+        files: [file],
+        title: "Album Wall",
+      });
+
+      return;
+    }
+
+    // Normal download for desktop
+    const link =
+      document.createElement("a");
+
+    const url =
+      URL.createObjectURL(blob);
+
+    link.href = url;
+    link.download = "album-wall.png";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      error.name === "AbortError"
+    ) {
+      return;
+    }
+
+    console.error(
+      "Wallpaper download failed:",
+      error
+    );
+  }
 }
 
 // -----------------------------
@@ -1592,29 +1680,8 @@ return (
             </button>
 
             <button
-              onClick={() => {
-                if (
-                  !wallpaperUrl
-                ) {
-                  return;
-                }
-
-                const link =
-                  document.createElement(
-                    "a"
-                  );
-
-                link.href =
-                  wallpaperUrl;
-
-                link.download =
-                  "album-wall.png";
-
-                link.click();
-              }}
-              disabled={
-                !wallpaperUrl
-              }
+              onClick={downloadWallpaper}
+              disabled={!wallpaperUrl}
               className="w-full shrink-0 font-[family-name:var(--font-pixelify)] border-2 border-white border-b-black border-r-black bg-[#c0c0c0] px-6 py-2 text-sm text-black active:border-b-white active:border-r-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1.5"
             >
               {t.download}
