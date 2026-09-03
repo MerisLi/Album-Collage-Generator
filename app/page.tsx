@@ -133,7 +133,7 @@ searchingMusicBrainz:
 artistYearExplanation:
   "艺人 + 年份：浏览该艺人在这一年的发行记录",
 artistAlbumExplanation:
-  "艺人 + 专辑：进行更精确的搜索，并预览专辑封面",
+  "艺人 + 专辑：进行更精确的搜索（推荐）",
 
 // Search results
 availableReleases: "可用发行记录",
