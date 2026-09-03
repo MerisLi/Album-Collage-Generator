@@ -55,8 +55,6 @@ artistAlbumExplanation:
 // Search results
 availableReleases: "Available releases",
 searchResults: "Search results",
-artistYearNotice:
-  "Showing releases from this artist for the selected year. Album artwork is not loaded in this view.",
 add: "Add",
 adding: "Adding...",
 added: "✓ Added",
@@ -138,8 +136,6 @@ artistAlbumExplanation:
 // Search results
 availableReleases: "可用发行记录",
 searchResults: "搜索结果",
-artistYearNotice:
-  "正在显示该艺人在所选年份的发行记录。此模式不会加载专辑封面",
 add: "添加",
 adding: "添加中...",
 added: "✓ 已添加",
@@ -1260,14 +1256,7 @@ return (
 
           {releases.length > 0 && (
             <div className="mt-6">
-
-              {/* Artist + Year notice */}
-
-              {artistOnlySearch && (
-                <div className="mb-3 border border-[#808080] bg-[#d8e2ee] px-3 py-2 text-xs text-black">
-                  {t.artistYearNotice}
-                </div>
-              )}
+          
 
               {/* Results header */}
 
