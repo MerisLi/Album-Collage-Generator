@@ -48,9 +48,11 @@ searching: "Searching...",
 searchingMusicBrainz:
   "Searching MusicBrainz...",
 artistYearExplanation:
-  "Artist + year: browse releases without images.",
+  "Artist + year: browse releases from that year, including albums, EPs, and singles.",
 artistAlbumExplanation:
-  "Artist + album: search precisely with album artwork.",
+  "Artist + album: search for a specific release with album artwork.",
+searchTip:
+  "Tip: If you can't find a release, try the artist's original or English name.",
 
 // Search results
 availableReleases: "Available releases",
@@ -129,9 +131,11 @@ searching: "搜索中...",
 searchingMusicBrainz:
   "正在搜索 MusicBrainz...",
 artistYearExplanation:
-  "艺人 + 年份：浏览该艺人在这一年的发行记录",
+  "艺人 + 年份：浏览该艺人在这一年的发行记录，包括专辑、EP 和单曲。",
 artistAlbumExplanation:
-  "艺人 + 专辑：进行更精确的搜索（推荐）",
+  "艺人 + 专辑：搜索特定发行，并优先获取专辑封面。",
+searchTip:
+  "提示：如果搜不到发行记录，可以试试艺人的原名或英文名。",
 
 // Search results
 availableReleases: "可用发行记录",
@@ -1250,6 +1254,10 @@ return (
 
             <p>
               {t.artistAlbumExplanation}
+            </p>
+
+            <p>
+              {t.searchTip}
             </p>
 
           </div>
