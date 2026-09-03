@@ -419,21 +419,25 @@ try {
 
 }
 
+
 // -----------------------------
 // Add selected release
 // -----------------------------
 
 async function addAlbum(
-release: Release
+  release: Release
 ) {
-setAddingId(
-release.id
-);
+  console.log("Adding release:", release);
 
+  setAddingId(
+    release.id
+  );
 
-setError("");
+  setError("");
 
-try {
+  try {
+    let cover = release.cover;
+    if (!cover) {
   const response =
     await fetch(
       `/api/album-cover?id=${encodeURIComponent(
@@ -452,57 +456,68 @@ try {
     );
   }
 
-  const newAlbum: Album = {
-    id: Math.max(0, ...albums.map((album) => album.id)) + 1,
-
-    releaseId:
-      release.id,
-
-    title:
-      release.title,
-
-    artist:
-      release.artist,
-
-    cover:
-      data.image,
-  };
-
-  setAlbums(
-    (currentAlbums) => [
-      ...currentAlbums,
-      newAlbum,
-    ]
-  );
-
-  setReleases(
-    (currentReleases) =>
-      currentReleases.map(
-        (item) =>
-          item.id ===
-          release.id
-            ? {
-                ...item,
-                added: true,
-              }
-            : item
-      )
-  );
-
-} catch (error) {
-  console.error(error);
-
-  setError(
-    error instanceof Error
-      ? error.message
-      : t.unableToAdd
-  );
-
-} finally {
-  setAddingId(null);
+  cover = data.image;
 }
 
+if (!cover) {
+  throw new Error(t.coverNotFound);
+}
 
+const newAlbum: Album = {
+      id:
+        Math.max(
+          0,
+          ...albums.map(
+            (album) => album.id
+          )
+        ) + 1,
+
+      releaseId:
+        release.id,
+
+      title:
+        release.title,
+
+      artist:
+        release.artist,
+
+      cover:
+        cover,
+    };
+
+    setAlbums(
+      (currentAlbums) => [
+        ...currentAlbums,
+        newAlbum,
+      ]
+    );
+
+    setReleases(
+      (currentReleases) =>
+        currentReleases.map(
+          (item) =>
+            item.id ===
+            release.id
+              ? {
+                  ...item,
+                  added: true,
+                }
+              : item
+        )
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    setError(
+      error instanceof Error
+        ? error.message
+        : t.unableToAdd
+    );
+
+  } finally {
+    setAddingId(null);
+  }
 }
 
 // -----------------------------
@@ -581,59 +596,56 @@ setWallpaperUrl(null);
 // Swap albums
 // -----------------------------
 
-function handleSwapClick(
-id: number
-) {
-if (swapSource === null) {
-return;
-}
+function handleSwapClick(id: number) {
+  if (swapSource === null) {
+    return;
+  }
 
+  if (swapSource === id) {
+    setSwapSource(null);
+    setSwapMode(false);
+    return;
+  }
 
-if (
-  swapSource === id
-) {
+  const currentOrder = [...wallpaperOrder];
+
+  const firstIndex =
+    currentOrder.indexOf(swapSource);
+
+  const secondIndex =
+    currentOrder.indexOf(id);
+
+  if (
+    firstIndex === -1 ||
+    secondIndex === -1
+  ) {
+    return;
+  }
+
+  const newOrder =
+    [...currentOrder];
+
+  [
+    newOrder[firstIndex],
+    newOrder[secondIndex],
+  ] = [
+    newOrder[secondIndex],
+    newOrder[firstIndex],
+  ];
+
+  setWallpaperOrder(
+    newOrder
+  );
+
   setSwapSource(null);
   setSwapMode(false);
-  return;
+
+  void generateWallpaper(
+    newOrder
+  );
 }
 
-setWallpaperOrder(
-  (currentOrder) => {
-    const newOrder =
-      [...currentOrder];
 
-    const firstIndex =
-      newOrder.indexOf(
-        swapSource
-      );
-
-    const secondIndex =
-      newOrder.indexOf(id);
-
-    if (
-      firstIndex === -1 ||
-      secondIndex === -1
-    ) {
-      return currentOrder;
-    }
-
-    [
-      newOrder[firstIndex],
-      newOrder[secondIndex],
-    ] = [
-      newOrder[secondIndex],
-      newOrder[firstIndex],
-    ];
-
-    return newOrder;
-  }
-);
-
-setSwapSource(null);
-setSwapMode(false);
-
-
-}
 
 // -----------------------------
 // Generate wallpaper
@@ -742,8 +754,23 @@ try {
                       image
                     );
 
-                image.onerror =
-                  reject;
+              
+                image.onerror = () => {
+                  console.error(
+                    "Failed to load album cover:",
+                    album.title,
+                    album.artist,
+                    album.cover
+                  );
+
+                  reject(
+                    new Error(
+                      `Failed to load image: ${album.cover}`
+                    )
+                  );
+                };
+
+
 
                 image.src =
                   album.cover;
@@ -828,9 +855,10 @@ for (
 ) {
   const j =
     Math.floor(
-      Math.random() *
-        (i + 1)
-    );
+    // eslint-disable-next-line react-hooks/purity
+    Math.random() *
+      (i + 1)
+  );
 
   [
     shuffled[i],
