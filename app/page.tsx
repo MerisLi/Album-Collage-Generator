@@ -37,6 +37,9 @@ step3: "Select albums and create a collage.",
 step4: "Shuffle to generate a random collage🪄.",
 localStorageInfo:
   "Your album library is stored locally in your browser.",
+artworkCopyrightTitle: "Artwork & Copyright",
+artworkCopyright:
+  "Album artwork belongs to its respective copyright holders. Album Wall does not claim ownership of third-party artwork. Please do not use generated wallpapers for commercial purposes unless you have the necessary rights or permissions.",
 
 // Search
 addAnAlbum: "Add an Album",
@@ -120,6 +123,9 @@ step3: "选择专辑并创建专辑拼图。",
 step4: "点击随机按钮生成随机拼贴🪄。",
 localStorageInfo:
   "已添加到收藏库的专辑会保存在浏览器本地。",
+artworkCopyrightTitle: "图片与版权",
+artworkCopyright:
+  "专辑封面图片版权归其相应的版权所有者所有。本网站不拥有第三方图片的版权。除非您获取了必要的权利或授权，否则请勿将生成的壁纸用于商业用途。",
 
 // Search
 addAnAlbum: "添加专辑",
@@ -1031,6 +1037,16 @@ return (
           <div className="mt-5 border-2 border-[#808080] border-b-white border-r-white bg-[#e0e0e0] p-3 text-xs">
             {t.localStorageInfo}
           </div>
+
+          <div className="mt-4 text-xs leading-relaxed text-neutral-600">
+          <p className="font-bold">
+            {t.artworkCopyrightTitle}
+          </p>
+
+          <p className="mt-1">
+            {t.artworkCopyright}
+          </p>
+        </div>
 
           <div className="mt-5 flex justify-end">
 
