@@ -202,7 +202,7 @@ export async function GET(request: Request) {
 
       const releaseArtist =
         release["artist-credit"]
-          ?.map((a: any) => a.name)
+          ?.map((a: { name: string }) => a.name)
           .join(", ") ?? artist;
 
       const normalizedReleaseArtist =

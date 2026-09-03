@@ -356,6 +356,7 @@ export async function GET(
             "public, max-age=3600, s-maxage=86400",
         },
       }
+      
     );
   } catch (error) {
     console.error(
