@@ -104,7 +104,7 @@ generating: "Generating...",
 shuffle: "🎲 Shuffle",
 download: "Download",
 swapHint:
-  "Double-click two covers to swap positions",
+  "Double-click one cover, then another to swap their positions.",
 
 
 },
@@ -190,7 +190,7 @@ generating: "生成中...",
 shuffle: "🎲 随机生成",
 download: "下载",
 swapHint:
-  "双击两张封面即可交换位置",
+  "双击一张封面，再点击想要更换位置的封面来交换它们的位置",
 
 
 },
